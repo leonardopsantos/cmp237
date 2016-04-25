@@ -174,7 +174,20 @@ if options.smt and options.num_cpus > 1:
     fatal("You cannot use SMT with multiple CPUs!")
 
 np = options.num_cpus
-system = System(cpu = [CPUClass(cpu_id=i) for i in xrange(np)],
+
+class MyDefaultFUPool(MinorFUPool):
+    funcUnits = [MinorDefaultIntFU(), MinorDefaultIntFU(),
+        MinorDefaultIntMulFU(), 
+        MinorDefaultIntDivFU(), MinorDefaultFloatSimdFU(), 
+        MinorDefaultMemFU(), MinorDefaultMemFU(),
+        MinorDefaultMiscFU()]
+
+myFuncUnits=MyDefaultFUPool()
+mycpu = MinorCPU(executeMemoryIssueLimit=2, executeMemoryCommitLimit=2, executeMaxAccessesInMemory=2, executeFuncUnits=myFuncUnits)
+
+#mycpu = MinorCPU()
+
+system = System(cpu = mycpu,
                 mem_mode = test_mem_mode,
                 mem_ranges = [AddrRange(options.mem_size)],
                 cache_line_size = options.cacheline_size)

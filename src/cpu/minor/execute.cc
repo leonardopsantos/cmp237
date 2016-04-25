@@ -849,8 +849,6 @@ Execute::doInstCommitAccounting(MinorDynInstPtr inst)
     thread->numOp++;
     thread->numOps++;
     cpu.stats.numOps++;
-    cpu.stats.committedInstType[inst->id.threadId]
-                               [inst->staticInst->opClass()]++;
 
     /* Set the CP SeqNum to the numOps commit number */
     if (inst->traceData)
@@ -1505,6 +1503,19 @@ Execute::evaluate()
         if (fu->occupancy != 0 && !fu->stalled)
             becoming_stalled = false;
 
+
+
+        if( next_issuable_inst ) {
+			DPRINTF(Activity, "FU %d : next_issuable_inst = \n", i );
+			if (DTRACE(Activity) && !next_issuable_inst->isBubble())
+				next_issuable_inst->minorTraceInst(*this);
+			if (fu->stalled)
+				DPRINTF(Activity, "FU %d : STALLED \n", i );
+        }
+
+
+
+
         /* Could we possibly issue the next instruction?  This is quite
          *  an expensive test */
         if (next_issuable_inst && !fu->stalled &&
@@ -1515,6 +1526,8 @@ Execute::evaluate()
         {
             can_issue_next = true;
         }
+        else
+        	DPRINTF(Activity, "FU %d : not issuable!! \n", i );
     }
 
     bool head_inst_might_commit = false;
@@ -1522,6 +1535,15 @@ Execute::evaluate()
     /* Could the head in flight insts be committed */
     if (!inFlightInsts->empty()) {
         const QueuedInst &head_inst = inFlightInsts->front();
+
+        /*  TODO */
+
+        DPRINTF(Activity, "head_inst = \n");
+        if (DTRACE(Activity) && !head_inst.inst->isBubble())
+        	head_inst.inst->minorTraceInst(*this);
+
+
+
 
         if (head_inst.inst->isNoCostInst()) {
             head_inst_might_commit = true;
